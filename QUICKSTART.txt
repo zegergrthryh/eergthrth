@@ -1,0 +1,29 @@
+DAMANCOM LOGIN AUTOMATION
+=========================
+
+EASY SETUP (No technical knowledge needed):
+
+1. Download the entire "script_damancom" folder
+2. Run the launcher:
+   - Windows: Double-click "run.bat"
+   - Linux/Mac: Double-click "run.sh" or run: ./run.sh
+
+3. Dependencies will install automatically!
+
+4. Choose: 
+   - Option 1 = Command-line version
+   - Option 2 = GUI version (with graphical interface)
+
+5. Enter your username and password when prompted
+
+6. The script will automate the login and ask you for the OTP code
+
+THAT'S IT! No programming knowledge needed!
+
+FEATURES:
+✓ Automatic installation of requirements
+✓ User-friendly interface (GUI version)
+✓ Step-by-step progress logging
+✓ Secure - asks for credentials each time (not saved)
+✓ OTP support - prompts when needed
+✓ Works on Windows, Mac, and Linux
