@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Damancom Browser - Server View</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #1a1a2e;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: #16213e;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            color: white;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            color: #aaa;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            padding: 12px;
+            border: 2px solid #2d3e50;
+            border-radius: 8px;
+            background: #1a1a2e;
+            color: white;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #e74c3c;
+        }
+
+        .status {
+            background: #2d3e50;
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+        }
+
+        .status-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #667eea;
+        }
+
+        .status-text {
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .main-view {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #0f1419;
+        }
+
+        .header {
+            background: #16213e;
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 18px;
+        }
+
+        .browser-view {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        #browserScreen {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .step-indicator {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .info-box {
+            background: #2d3e50;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-box p {
+            color: #aaa;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .error {
+            background: #c0392b;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .success {
+            background: #27ae60;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>🔐 Login Controls</h2>
+
+        <div class="info-box">
+            <p>This browser is running on the server. Enter your credentials below and they will be automatically filled in the browser.</p>
+        </div>
+
+        <div id="startSection">
+            <button class="btn" onclick="startSession()">🚀 Start Browser Session</button>
+        </div>
+
+        <div id="usernameSection" class="hidden">
+            <div class="form-group">
+                <label>Username / Email</label>
+                <input type="text" id="username" placeholder="Enter your username">
+            </div>
+            <button class="btn" onclick="submitUsername()">Continue →</button>
+        </div>
+
+        <div id="passwordSection" class="hidden">
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Enter your password">
+            </div>
+            <button class="btn" onclick="submitPassword()">Continue →</button>
+        </div>
+
+        <div id="otpSection" class="hidden">
+            <div class="form-group">
+                <label>OTP Code (6 digits)</label>
+                <input type="text" id="otp" maxlength="6" placeholder="000000">
+            </div>
+            <button class="btn" onclick="submitOTP()">Complete Login ✓</button>
+        </div>
+
+        <div class="status">
+            <div class="status-title">Status</div>
+            <div class="status-text" id="statusText">Ready to start</div>
+        </div>
+
+        <div id="errorBox" class="error"></div>
+        <div id="successBox" class="success"></div>
+
+        <button class="btn btn-secondary" onclick="cleanup()" style="margin-top: auto;">🔄 Reset Session</button>
+    </div>
+
+    <div class="main-view">
+        <div class="header">
+            <h1>🌐 Server Browser View</h1>
+            <div id="stepIndicator" class="step-indicator">Not Started</div>
+        </div>
+
+        <div class="browser-view">
+            <div id="loadingOverlay" class="loading-overlay">
+                <div>⏳ Initializing browser...</div>
+            </div>
+            <img id="browserScreen" src="" alt="Browser view will appear here" style="display: none;">
+        </div>
+    </div>
+
+    <script>
+        let refreshInterval = null;
+        let currentStep = 'start';
+
+        function updateStatus(message) {
+            document.getElementById('statusText').textContent = message;
+        }
+
+        function showError(message) {
+            const errorBox = document.getElementById('errorBox');
+            errorBox.textContent = message;
+            errorBox.classList.add('show');
+            setTimeout(() => errorBox.classList.remove('show'), 5000);
+        }
+
+        function showSuccess(message) {
+            const successBox = document.getElementById('successBox');
+            successBox.textContent = message;
+            successBox.classList.add('show');
+            setTimeout(() => successBox.classList.remove('show'), 5000);
+        }
+
+        function updateScreenshot(screenshotData) {
+            const img = document.getElementById('browserScreen');
+            if (screenshotData) {
+                img.src = 'data:image/png;base64,' + screenshotData;
+                img.style.display = 'block';
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }
+        }
+
+        function showSection(step) {
+            document.getElementById('startSection').classList.add('hidden');
+            document.getElementById('usernameSection').classList.add('hidden');
+            document.getElementById('passwordSection').classList.add('hidden');
+            document.getElementById('otpSection').classList.add('hidden');
+
+            if (step === 'username') {
+                document.getElementById('usernameSection').classList.remove('hidden');
+                document.getElementById('stepIndicator').textContent = 'Step 1: Username';
+            } else if (step === 'password') {
+                document.getElementById('passwordSection').classList.remove('hidden');
+                document.getElementById('stepIndicator').textContent = 'Step 2: Password';
+            } else if (step === 'otp') {
+                document.getElementById('otpSection').classList.remove('hidden');
+                document.getElementById('stepIndicator').textContent = 'Step 3: OTP';
+            }
+        }
+
+        async function startSession() {
+            updateStatus('Starting browser session...');
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+
+            try {
+                const response = await fetch('/start_session', { method: 'POST' });
+                const data = await response.json();
+
+                if (data.success) {
+                    updateScreenshot(data.screenshot);
+                    showSection(data.step);
+                    updateStatus('Ready for username');
+                    currentStep = data.step;
+                    
+                    refreshInterval = setInterval(refreshScreenshot, 2000);
+                } else {
+                    showError(data.error || 'Failed to start session');
+                    updateStatus('Error starting session');
+                }
+            } catch (err) {
+                showError('Network error: ' + err.message);
+                updateStatus('Connection error');
+            }
+        }
+
+        async function refreshScreenshot() {
+            try {
+                const response = await fetch('/get_screenshot', { method: 'POST' });
+                const data = await response.json();
+
+                if (data.success) {
+                    updateScreenshot(data.screenshot);
+                }
+            } catch (err) {
+                console.error('Screenshot refresh error:', err);
+            }
+        }
+
+        async function submitUsername() {
+            const username = document.getElementById('username').value;
+            if (!username) {
+                showError('Please enter username');
+                return;
+            }
+
+            updateStatus('Submitting username...');
+
+            try {
+                const response = await fetch('/submit_username', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    updateScreenshot(data.screenshot);
+                    showSection(data.step);
+                    updateStatus('Username submitted. Enter password');
+                    currentStep = data.step;
+                } else {
+                    showError(data.error || 'Failed to submit username');
+                }
+            } catch (err) {
+                showError('Network error: ' + err.message);
+            }
+        }
+
+        async function submitPassword() {
+            const password = document.getElementById('password').value;
+            if (!password) {
+                showError('Please enter password');
+                return;
+            }
+
+            updateStatus('Submitting password...');
+
+            try {
+                const response = await fetch('/submit_password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    updateScreenshot(data.screenshot);
+                    showSection(data.step);
+                    updateStatus('Password submitted. Check SMS/Email for OTP');
+                    currentStep = data.step;
+                } else {
+                    showError(data.error || 'Failed to submit password');
+                }
+            } catch (err) {
+                showError('Network error: ' + err.message);
+            }
+        }
+
+        async function submitOTP() {
+            const otp = document.getElementById('otp').value;
+            if (!otp || otp.length !== 6) {
+                showError('Please enter 6-digit OTP');
+                return;
+            }
+
+            updateStatus('Verifying OTP...');
+
+            try {
+                const response = await fetch('/submit_otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ otp })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    updateScreenshot(data.screenshot);
+                    if (data.logged_in) {
+                        showSuccess('✅ Login successful!');
+                        updateStatus('Logged in successfully');
+                        document.getElementById('stepIndicator').textContent = '✓ Complete';
+                    } else {
+                        showSuccess('Login completed. Check browser view.');
+                        updateStatus('Login process completed');
+                    }
+                    clearInterval(refreshInterval);
+                } else {
+                    showError(data.error || 'Failed to verify OTP');
+                }
+            } catch (err) {
+                showError('Network error: ' + err.message);
+            }
+        }
+
+        async function cleanup() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+
+            try {
+                await fetch('/cleanup', { method: 'POST' });
+                window.location.reload();
+            } catch (err) {
+                window.location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
