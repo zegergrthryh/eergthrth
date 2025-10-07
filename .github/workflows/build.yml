@@ -6,12 +6,11 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build-windows:
     runs-on: windows-latest
-
     env:
-      APP_NAME: MyApp
-      ENTRYPOINT: main.py
+      APP_NAME: MyApp         # <-- change if you want another exe name
+      ENTRYPOINT: app.py     # <-- set to app.py if that is your starter
 
     steps:
       - name: Checkout
@@ -23,23 +22,46 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
+        shell: pwsh
         run: |
           python -m pip install --upgrade pip
           if (Test-Path "requirements.txt") { pip install -r requirements.txt }
           pip install pyinstaller
 
-      - name: Build executable
+      - name: Sanity checks
+        shell: pwsh
         run: |
-          $icon = ""
-          if (Test-Path "generated-icon.png") { $icon = "--icon generated-icon.png" }
+          Write-Host "ENTRYPOINT = $env:ENTRYPOINT"
+          if (!(Test-Path $env:ENTRYPOINT)) {
+            Get-ChildItem -Name
+            throw "ENTRYPOINT not found in repo root"
+          }
+          if (Test-Path "generated-icon.ico") {
+            Write-Host "Will use generated-icon.ico"
+          } else {
+            Write-Host "No .ico found; skipping icon (Windows needs .ico, not .png)"
+          }
 
-          $add = ""
-          if (Test-Path "templates") { $add = "--add-data templates;templates" }
+      - name: Build executable (PyInstaller)
+        shell: pwsh
+        run: |
+          $iconArg = ""
+          if (Test-Path "generated-icon.ico") { $iconArg = "--icon generated-icon.ico" }
 
-          pyinstaller $icon $add --name "$env:APP_NAME" --onefile --windowed "$env:ENTRYPOINT"
+          $addArg = ""
+          if (Test-Path "templates") { $addArg = "--add-data templates;templates" }
+
+          # Call as a module to avoid PATH/arg parsing quirks
+          python -m PyInstaller `
+            $iconArg $addArg `
+            --name "$env:APP_NAME" `
+            --onefile `
+            --windowed `
+            "$env:ENTRYPOINT"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}-Windows
           path: dist/${{ env.APP_NAME }}.exe
+          if-no-files-found: error
